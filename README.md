@@ -20,7 +20,7 @@ cd medical-rag-assistant
 ## Status
 - [x] Phase 0  — Project setup
 - [x] Phase 1  — Data ingestion & cleaning
-- [ ] Phase 2  — Database setup (Docker + Postgres)
+- [x] Phase 2  — Database setup (Docker + Postgres)
 - [ ] Phase 3  — SQL schema & structured data
 - [ ] Phase 4  — Tokenization & chunking
 - [ ] Phase 5  — Embeddings
@@ -57,3 +57,31 @@ After step 3, check `data/raw/` — one `.xml` file per drug. After step
 4, check `data/processed/` — one clean `.json` file per drug, each
 broken into labeled sections (e.g. `WARNINGS`, `DOSAGE AND
 ADMINISTRATION`).
+
+## Phase 2 — Database setup
+
+Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+(with WSL2 backend on Windows) installed and running.
+
+```bash
+docker compose up -d
+```
+
+This starts a PostgreSQL 16 container with the `pgvector` extension
+pre-installed, on `localhost:5432`. Credentials (local dev only, not
+used anywhere public) are set in `docker-compose.yml`.
+
+Verify it's running:
+```bash
+docker ps
+docker exec -it medical-rag-db psql -U raguser -d medical_rag -c "CREATE EXTENSION IF NOT EXISTS vector; SELECT extname FROM pg_extension;"
+```
+You should see `vector` and `plpgsql` listed.
+
+To stop the database:
+```bash
+docker compose down
+```
+(Data persists in a Docker volume — `docker compose down` does not
+delete it. `docker compose down -v` would, if you ever want a clean
+slate.)
