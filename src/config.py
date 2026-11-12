@@ -1,14 +1,24 @@
 from pathlib import Path 
+import os
+from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 RAW_DIR = PROJECT_ROOT / "data" / "raw"
 PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
-print(f"Project root: {PROJECT_ROOT}")
 
 DAILYMED_BASE_URL = "https://dailymed.nlm.nih.gov/dailymed/services/v2"
 
+load_dotenv(PROJECT_ROOT / ".env")
+
+DB_CONFIG = {
+    "host": os.environ.get("POSTGRES_HOST", "localhost"),
+    "port": int(os.environ.get("POSTGRES_PORT", "5433")),
+    "dbname": os.environ.get("POSTGRES_DB", "medical_rag_v2"),
+    "user": os.environ.get("POSTGRES_USER", "raguser"),
+    "password": os.environ["POSTGRES_PASSWORD"],   # no default
+}
 
 DRUG_LIST = [
     # --- Original core set ---

@@ -21,7 +21,7 @@ cd medical-rag-assistant
 - [x] Phase 0  — Project setup
 - [x] Phase 1  — Data ingestion & cleaning
 - [x] Phase 2  — Database setup (Docker + Postgres)
-- [ ] Phase 3  — SQL schema & structured data
+- [x] Phase 3  — SQL schema & structured data
 - [ ] Phase 4  — Tokenization & chunking
 - [ ] Phase 5  — Embeddings
 - [ ] Phase 6  — Hybrid retrieval
@@ -85,3 +85,33 @@ docker compose down
 (Data persists in a Docker volume — `docker compose down` does not
 delete it. `docker compose down -v` would, if you ever want a clean
 slate.)
+
+## Phase 3 — SQL schema & structured data
+
+Two core tables: `drugs` (one row per drug) and `sections` (one row
+per label section, linked to its drug via a foreign key). See
+`sql/schema.sql` for the full definitions and inline comments
+explaining each design choice.
+
+Load all parsed JSON into the database:
+```bash
+cd src
+python load_to_db.py
+```
+
+This applies the schema (safe to re-run) and loads every file in
+`data/processed/`. Re-running is idempotent — existing drugs are
+updated rather than duplicated, and each drug's sections are fully
+replaced from the current JSON rather than appended to.
+
+Verify:
+```bash
+docker exec -it medical-rag-db psql -U raguser -d medical_rag -c "SELECT COUNT(*) FROM drugs;"
+docker exec -it medical-rag-db psql -U raguser -d medical_rag -c "SELECT COUNT(*) FROM sections;"
+docker exec -it medical-rag-db-v2 psql -U raguser -d medical_rag_v2 -c "SELECT d.drug_name, COUNT(s.section_id) FROM drugs d JOIN sections s ON s.drug_id = d.drug_id GROUP BY d.drug_name;"
+```
+
+**Browsing the data:** either `psql` directly via the `docker exec`
+commands above, or a GUI client like [DBeaver](https://dbeaver.io/)
+(free) connecting to `localhost:5433`, database `medical_rag_v2`, using
+the credentials in `docker-compose.yml`.
